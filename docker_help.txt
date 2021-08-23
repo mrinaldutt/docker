@@ -1,0 +1,625 @@
+Loin: in28min/dummy
+
+docker hub (hub.docker.com): registry where all of the public container images and repository stayed
+
+search https://hub.docker.com/r/in28min/todo-rest-api-h2/
+go to tags: find the diff images 
+
+Images: static version of the container
+Container: Running version of the images
+
+Run:
+C:\Users\594219>docker run in28min/todo-rest-api-h2:1.0.0.RELEASE
+it will download image and run the images, so container will be runnning.
+
+Now published:
+Docker internal ip to be published then only we can ran the application inside the container.
+C:\Users\594219>docker run -p 5000:5000 in28min/todo-rest-api-h2:1.0.0.RELEASE
+here we have published the application into 5000
+
+Now we need to detached, so it can running background.
+C:\Users\594219>docker run -p 5000:5000 -d in28min/todo-rest-api-h2:1.0.0.RELEASE
+
+Now check the logs:
+C:\Users\594219>docker logs 736528d1bf191c5c8710f018570a271e4d1209d60bf5bddb168dd7d82fcc17c3
+here we have passed the container id
+
+Now trailing the logs:
+C:\Users\594219>docker logs -f 736528d1bf191c5c8710f018570a271e4d1209d60bf5bddb168dd7d82fcc17c3
+
+listing the container:
+C:\Users\594219>docker container ls
+
+Now run multiple container from same image:
+C:\Users\594219>docker run -p 5001:5000 -d in28min/todo-rest-api-h2:1.0.0.RELEASE
+
+listing the images:
+C:\Users\594219>docker images
+
+Listing the running container with exciting container:
+C:\Users\594219>docker container ls -a
+
+stop the container:
+docker container stop <container_id>
+
+--------------------------------------------
+Architechture: When we install docker desktop in our OS, we have installed docker client and docker daemon
+Docker client : where we fire those command
+Docker Daemon: Its responsible for managing the containers, local images, pulling from Image registry, pushing locally creating images to image registry.
+
+All container managing by docker daemon.
+
+-------------------------------------------
+Deployment with Docker:
+docker tag - same repository marked with differnt tags:
+docker tag repo:oldtag repo:newtag
+C:\Users\594219>docker tag in28min/todo-rest-api-h2:1.0.0.RELEASE in28min/todo-rest-api-h2:latest
+
+pull a image:
+docker pull mysql
+it will download the image into local images frm the latest tag from image registry.
+
+Check official image: docker search mysql
+
+check histroy of the image: docker image history <imageid>
+C:\Users\594219>docker image history f8049a029560
+
+Inspect the image: docker image inspect <imageid>
+C:\Users\594219>docker image inspect f8049a029560
+
+To remove image: docker image remove <image_id>
+C:\Users\594219>docker image remove 5c62e459e087
+-----------------------------------------
+
+To pause a container:
+docker container pause <container_id>
+
+to release the pause:
+docker container unpause <container_id>
+
+to inspect a container:
+docker container inspect <container_id>
+
+listing the container with stopped status:
+docker container ls -a
+
+to remove all stopped container:
+C:\Users\594219>docker container prune
+WARNING! This will remove all stopped containers.
+Are you sure you want to continue? [y/N] y
+
+When we stop the container - C:\Users\594219>docker container stop f4bf28dca274
+it will first stop other process like executor services, jpa process then shutdown the container.
+Stop => SIGTERM =>Gracefl shutdown
+
+When kill: C:\Users\594219>docker kill da24d3a25e71, it will suddenly kill the container.
+Kill => SIGKILL =>Immediately terminates the process
+
+
+when we run the container with always option like:
+C:\Users\594219>docker container run -p 5000:5000 -d --restart=always in28min/todo-rest-api-h2:1.0.0.RELEASE
+then if we stop the container like: C:\Users\594219>docker container stop <container_id>
+so restart always is like, if we restart the docker desktop, so automatically restart conatainer
+
+
+docker events: to show all of the events in docker - C:\Users\594219>docker events
+
+docker top: C:\Users\594219>docker top e11f53e56c0f: to check all processes within the container.
+
+docker stats: to check all of cpu utilizaton of docker
+
+to assign memory and cpu percentage:
+C:\Users\594219>docker container run -p 5000:5000 -m 512m --cpu-quota 50000 -d  in28min/todo-rest-api-h2:1.0.0.RELEASE
+
+100000 - 100%
+---------------------------------
+docker system df : all of the different thigns with docker
+C:\Users\594219>docker system df
+TYPE            TOTAL     ACTIVE    SIZE      RECLAIMABLE
+Images          3         1         209.1MB   170.9MB (81%)
+Containers      1         1         0B        0B
+Local Volumes   13        1         65.54kB   32.77kB (50%)
+Build Cache     0         0         0B        0B
+
+
+---------------------------------------
+Run openjdk:8-jdk-alpine: docker run -dit openjdk:8-jdk-alpine
+d for detached mode
+i - interactive shell
+-----------------------------------------
+copy the jar file into the container: docker container cp target/hello-world-rest-api.jar affectionate_euler:/tmp
+note: affectionate_euler is the name of the container
+
+to check the copied file: docker container exec  affectionate_euler ls /tmp
+
+save the container as a image: docker container commit  affectionate_euler in28min/hello-world-rest-api:manual1
+here name of the image: in28min/hello-world-rest-api
+tag: manual1
+conatainer name: affectionate_euler
+
+now run the newly created image: docker run in28min/hello-world-rest-api:manual1
+But nothing will run because we havn;t specified the startup of our app.
+
+docker container ls
+C:\Mrinal\tutorial\docker\docker-crash-course-master\01-hello-world-rest-api> docker container commit --change='CMD "java" "-jar" "hello-world-rest-api.jar"'  zealous_wozniak in28min/hello-world-rest-api:manual2
+sha256:46298f8fb4a89d38d576bfca643a2723a1476a45dad337ab19864cf7bf0be6c1
+
+C:\Mrinal\tutorial\docker\docker-crash-course-master\01-hello-world-rest-api>docker container commit  --change="CMD ["java","-jar","/tmp/hello-world-rest-api.jar"]" gallant_margulis in28min/hello-world-rest-api:manual1
+sha256:fd3da1ca52ab4ec44d56bcec0b20a55a3e306bf200902669389d728ea0fbad37
+
+
+PS C:\Mrinal\tutorial\docker\docker-crash-course-master\01-hello-world-rest-api> docker run -p 8080:8080 in28min/hello-world-rest-api:manual2
+---------------------------------
+
+To remove the manual steps, we can create a Dockerfile and push it to container and start the container as follows:
+1. create a Dockerfile using below data:
+FROM openjdk:8-jdk-alpine
+EXPOSE 8080
+ADD target/hello-world-rest-api.jar hello-world-rest-api.jar
+ENTRYPOINT ["sh", "-c", "java -jar /hello-world-rest-api.jar"]
+
+2. push all data into container and tagged a new:
+ C:\Mrinal\tutorial\docker\docker-crash-course-master\01-hello-world-rest-api> docker build -t in28min/hello-world-rest-api:dockerfile1 .
+
+3. Run the container: C:\Mrinal\tutorial\docker\docker-crash-course-master\01-hello-world-rest-api> docker run -p 8080:8080 in28min/hello-world-rest-api:dockerfile1
+--------------------------------------
+
+Maven docker plugin : automatically build the container and push the data when clean package done from maven
+now add plugin:
+<plugin>
+	<groupId>com.spotify</groupId>
+	<artifactId>dockerfile-maven-plugin</artifactId>
+	<version>1.4.10</version>
+	<executions>
+		<execution>
+			<id>default</id>
+			<goals>
+				<goal>build</goal>
+			</goals>
+		</execution>
+	</executions>
+	<configuration>
+		<repository>in28min/${project.name}</repository>
+		<tag>${project.version}</tag>
+		<skipDockerInfo>true</skipDockerInfo>
+	</configuration>
+</plugin>
+
+and mvn clean package -DskipTests
+so now jar created and also image build.
+-----------------------------------
+Now create a reusabble jar:
+open Dockerfile: change the jarfile name to *.jar and copy the jar named as app.jar
+FROM openjdk:8-jdk-alpine
+EXPOSE 8080
+ADD target/*.jar app.jar
+ENTRYPOINT ["sh", "-c", "java -jar /app.jar"]
+
+if you run mvn clean package, 
+1. you can find the jar created named as hello-world-rest-api.jar.
+2. Image will be build -  FROM openjdk:8-jdk-alpine
+3. ADD target/*.jar app.jar
+4. ENTRYPOINT ["sh", "-c", "java -jar /app.jar"]
+---------------------------------
+
+Now we want to cached the jar files from docker.
+1. So need to split the jar from created code using maven plugin
+<plugin>	
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>unpack</id>
+						<phase>package</phase>
+						<goals>
+							<goal>unpack</goal>
+						</goals>
+						<configuration>
+							<artifactItems>
+								<artifactItem>
+									<groupId>${project.groupId}</groupId>
+									<artifactId>${project.artifactId}</artifactId>
+									<version>${project.version}</version>
+								</artifactItem>
+							</artifactItems>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+mvn clean package, you can find BOOT-INF and META-INF created in target/dependency folder
+
+
+2. Now change the dockerfile to add separately lib and classes and meta-inf into images
+FROM openjdk:8-jdk-alpine
+ARG DEPENDENCY=target/dependency
+COPY ${DEPENDENCY}/BOOT-INF/lib /app/lib
+COPY ${DEPENDENCY}/META-INF /app/META-INF
+COPY ${DEPENDENCY}/BOOT-INF/classes /app
+ENTRYPOINT ["java","-cp","app:app/lib/*","com.in28minutes.rest.webservices.restfulwebservices.RestfulWebServicesApplication"]
+
+3. Now run the image - C:\Mrinal\tutorial\docker\docker-crash-course-master\01-hello-world-rest-api> docker build -t  in28min/hello-world-rest-api:dockerfile1 .
+-------------------------------------
+JIB plugin: added in pom:
+<plugin>
+	<groupId>com.google.cloud.tools</groupId>
+	<artifactId>jib-maven-plugin</artifactId>
+	<version>1.6.1</version>
+	<configuration>
+		<container>
+			<creationTime>USE_CURRENT_TIMESTAMP</creationTime>
+		</container>
+	</configuration>
+	<executions>
+		<execution>
+			<phase>package</phase>
+			<goals>
+				<goal>dockerBuild</goal>
+			</goals>
+		</execution>
+	</executions>
+</plugin>
+
+Now mvn clean  and new image will created inside the docker.
+
+Now check the history of the image
+C:\Mrinal\tutorial\docker\docker-crash-course-master\01-hello-world-rest-api> docker history 01-hello-world-rest-api:0.0.1-SNAPSHOT
+
+Now run the docker:  docker run -p 8080:8080 01-hello-world-rest-api:0.0.1-SNAPSHOT
+
+---------------------------------
+Fabric8io/docker-maven-plugin:
+Fabric8io with Dockerfile:
+Remove Spotify Maven and JIB Plugins. Add the plugin shown below and configure property for jar file.
+<!-- To build the image - "mvn clean package" -->
+<!-- Successfully tagged webservices/01-hello-world-rest-api -->
+<!-- docker run -p 8080:8080 webservices/01-hello-world-rest-api -->
+<plugin>
+	<groupId>io.fabric8</groupId>
+	<artifactId>docker-maven-plugin</artifactId>
+	<version>0.26.0</version>
+	<executions>
+		<execution>
+			<id>docker-build</id>
+			<phase>package</phase>
+			<goals>
+				<goal>build</goal>
+			</goals>
+		</execution>
+	</executions>
+</plugin>
+
+Also add below properties:
+<properties>
+...
+ <jar>${project.build.directory}/${project.build.finalName}.jar</jar>
+</properties>
+
+---------------------------------
+===============================SECOND WEB APP========================
+uid/pwd - in28minutes / dummy
+in h2: JDBC URL: jdbc:h2:mem:testdb
+url for h2: http://localhost:8080/h2-console/
+
+clean package, here using spotify Maven docker plugin in pom.xml and Dockerfile
+run using docker run -p 8080:8080 in28min/todo-web-application-h2:0.0.1-SNAPSHOT
+
+Now test the app, out spring app will be running from docker
+----------------------------------------
+Push a war file into docker:
+create an account into hub.docker.com
+
+now go to pom and change the <repository> name with ur newly created docker id
+
+now mvn clean package
+
+Now go to cmd: docker login
+C:\Users\594219>docker push mrinaldutt/todo-web-application-h2:0.0.1-SNAPSHOT
+
+The repo will pushed into ur dokcer hub account.
+
+Another way:
+you can specify in POM.xml: <goal>push</goal>
+and setting.xml:
+<servers>
+<server>
+<id>docker-repo-mrinaldutt.com:8080</id>
+<username>mrinaldutt</username>
+<password>Maya2021#</password>
+</server>
+</servers>
+
+so, it will create build and push into ur repo.
+----------------------------------
+Mysql install from docker
+-----------------------------------
+C:\Users\594219>docker run mysql:5.7
+it will download the image, but not run mysql
+
+C:\Users\594219>docker run -d -e MYSQL_ROOT_PASSWORD=mysql -e MYSQL_USER=root -e MYSQL_PASSWORD=mysql -e MYSQL_DATABASE=todos mysql:5.7
+it will starts, but we can useit until published to a port.
+
+C:\Users\594219>docker container stop 9766a752401b
+C:\Users\594219>docker rm 9766a752401b
+stop and remove
+
+C:\Users\594219>docker run --detach --env MYSQL_ROOT_PASSWORD=dummypassword --env MYSQL_USER=todos-user --env MYSQL_PASSWORD=dummytodos --env MYSQL_DATABASE=todos --name mysql --publish 3307:3306 mysql:5.7
+9723c7133efacff61774b798fa0410a19ea26f9368ccd0c4ff6e057ae06b12b3
+
+C:\Users\594219>docker container list
+CONTAINER ID   IMAGE       COMMAND                  CREATED          STATUS         PORTS                                                  NAMES
+9723c7133efa   mysql:5.7   "docker-entrypoint.s…"   10 seconds ago   Up 9 seconds   33060/tcp, 0.0.0.0:3307->3306/tcp, :::3307->3306/tcp   mysql
+
+Now clean and package the spring boot mysql application after specify spotify and dockerfile.
+C:\Users\594219>docker run -p 8080:8080 in28min/todo-web-application-mysql:0.0.1-SNAPSHOT
+
+-------------Open Mysql Shell ----------
+MySQL  JS > \connect todos-user@localhost:3307
+MySQL  localhost:3307 ssl  JS > \sql
+MySQL  localhost:3307 ssl  SQL > use todos
+
+MySQL  localhost:3307 ssl  todos  SQL > select *from todo;
++----+-----------------------------------+---------+----------------------------+-------------+
+| id | description                       | is_done | target_date                | user        |
++----+-----------------------------------+---------+----------------------------+-------------+
+|  1 | Learn to create database in cloud | 0       | 2021-07-20 18:30:00.000000 | in28minutes |
++----+-----------------------------------+---------+----------------------------+-------------+
+1 row in set (0.1112 sec)
+=======================Bridge Network Issue======================
+As both the container using localhost, thus brdige network issue occurs, we will overcome this by supply --link.
+
+1. Chnage application.properties:
+spring.datasource.url=jdbc:mysql://${RDS_HOSTNAME:localhost}:${RDS_PORT:3307}/${RDS_DB_NAME:todos}
+spring.datasource.username=${RDS_USERNAME:todos-user}
+spring.datasource.password=${RDS_PASSWORD:dummytodos}
+
+2. docker run --detach --env MYSQL_ROOT_PASSWORD=dummypassword --env MYSQL_USER=todos-user --env MYSQL_PASSWORD=dummytodos --env MYSQL_DATABASE=todos --name mysql --publish 3306:3306 mysql:5.7
+
+Now both the application running successfully.
+
+========================Running on Host network============================
+C:\Users\594219>docker network ls
+NETWORK ID     NAME      DRIVER    SCOPE
+6f31f915e719   bridge    bridge    local
+8a741129a7ce   host      host      local
+1d3a4e5a0030   none      null      local
+
+C:\Users\594219>docker inspect bridge
+here you can see mysql running on bridge network. if you run todos app, then you coould find both the container inside the bridge network
+
+C:\Users\594219>docker container run -d ---network=host in28min/todo-web-application-mysql:0.0.1-SNAPSHOT
+it will work only with linux env.
+
+=================== Custom network ===================================
+Here we will create our own network:
+C:\Users\594219>docker network create web-application-mysql-network
+f7f411e490d3019a3e9e211ad51375e1b2a82158ca03ccb9b626c711688b3ab8
+
+C:\Users\594219>docker container ls
+CONTAINER ID   IMAGE       COMMAND                  CREATED        STATUS        PORTS                                                  NAMES
+9723c7133efa   mysql:5.7   "docker-entrypoint.s…"   27 hours ago   Up 27 hours   33060/tcp, 0.0.0.0:3307->3306/tcp, :::3307->3306/tcp   mysql
+
+Stop the mysql container -
+C:\Users\594219>docker container stop 9723c7133efa
+9723c7133efa
+
+C:\Users\594219>docker container ls
+CONTAINER ID   IMAGE     COMMAND   CREATED   STATUS    PORTS     NAMES
+
+C:\Users\594219>docker network ls
+NETWORK ID     NAME                            DRIVER    SCOPE
+6f31f915e719   bridge                          bridge    local
+8a741129a7ce   host                            host      local
+1d3a4e5a0030   none                            null      local
+f7f411e490d3   web-application-mysql-network   bridge    local
+
+now stop earlier mysql container and remove it:
+C:\Users\594219>docker rm mysql
+
+Now start the container inside custom bridge :
+C:\Users\594219>docker run --detach --env MYSQL_ROOT_PASSWORD=dummypassword --env MYSQL_USER=todos-user --env MYSQL_PASSWORD=dummytodos --env MYSQL_DATABASE=todos --name mysql --publish 3307:3306 --network=web-application-mysql-network mysql:5.7
+
+Now run application within custom bridge:
+C:\Users\594219>docker container run -p 8080:8080 --network=web-application-mysql-network -e RDS_HOSTNAME=mysql  in28min/todo-web-application-mysql:0.0.1-SNAPSHOT
+
+Now check both the container inside the custom bridge:
+C:\Users\594219>docker inspect f7f411e490d3
+===================================Volume======================
+
+backup data while remove mysql container.
+Use volume
+
+docker run --detach --env MYSQL_ROOT_PASSWORD=dummypassword --env MYSQL_USER=todos-user --env MYSQL_PASSWORD=dummytodos --env MYSQL_DATABASE=todos --name mysql --publish 3306:3306 --network=web-application-mysql-network --volume mysql-database-volume:/var/lib/mysql  mysql:5.7
+
+Now run docker container run -p 8080:8080 --network=web-application-mysql-network -e RDS_HOSTNAME=mysql  in28min/todo-web-application-mysql:0.0.1-SNAPSHOT
+====================================================REACT JS with Rest Application================================
+
+React application build and push it to container
+
+create a dockerfile within the reactjs front end application:
+## Stage 1 - Lets build the "deployable package"
+FROM node:7.10 as frontend-build
+WORKDIR /fullstack/frontend
+
+# Step 1 - Download all package dependencies first.
+# We will redownload dependencies only when packages change.
+COPY package.json package-lock.json ./
+RUN npm install
+
+# Step 2 - Copy all source and run build
+COPY . ./
+RUN npm run build
+
+## Stage 2 - Let's build a minimal image with the "deployable package"
+FROM nginx:1.12-alpine
+COPY --from=frontend-build /fullstack/frontend/build /usr/share/nginx/html
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
+-----------------
+now create dockerignore file and specify :
+node_modules
+because its containging large amount of dependencies, so from second time onwards those large dependecies wont push to container , it will run from cache and it will deploy faster.
+------------------------
+Now got to termnal for 2 stage build for front end app: docker build .
+
+it will download node images from node:7.10 
+npm install according to the package.json
+
+download minimal image with the "deployable package": nginx:1.12-alpine
+copy the reactjs front end app into the container
+
+Now run: C:\Mrinal\tutorial\docker\docker-crash-course-master\04-spring-boot-react-full-stack-h2\frontend\todo-app>docker run -p 4200:80 in28min/todo-front-end:0.0.1-SNAPSHOT
+-----------------------
+Run the spring boot rest application:
+Clean package the spring boot app.
+it will create the container
+
+Now run the backend app
+C:\Users\594219>docker run -p 8080:8080 in28min/rest-api-full-stack:0.0.1-SNAPSHOT
+
+check both container in same bridge:
+C:\Users\594219>docker network ls
+C:\Users\594219>docker inspect network d797bf780b74
+
+Now test the app with localhost:4200/
+login using in28min/dummy
+---------------------
+
+Now change the backend app:
+chnage the pom, removing the unpack, spotify maven dependency plugin
+also change the Dockerfile for applying the 2 stage build
+
+Now go to command prmop C:\Mrinal\tutorial\docker\docker-crash-course-master\04-spring-boot-react-full-stack-h2\restful-web-services>docker build .
+
+C:\Mrinal\tutorial\docker\docker-crash-course-master\04-spring-boot-react-full-stack-h2\restful-web-services>docker tag 0c071cfe26e5 in28min/rest-api-full-stack:2stagebuild
+
+C:\Mrinal\tutorial\docker\docker-crash-course-master\04-spring-boot-react-full-stack-h2\restful-web-services>docker run -p 8080:8080 in28min/rest-api-full-stack:2stagebuild
+
+==========================DOCKER COMPOSE=======================
+Its used to remove the 2 stage build, just all the conifg in one file and run in single command.
+First check the docker-compose whether its installed or not
+C:\Users\594219>docker-compose -v
+docker-compose version 1.29.1, build c34c88b2
+
+Now check the associated images present or not:
+C:\Mrinal\tutorial\docker\docker-crash-course-master\04-spring-boot-react-full-stack-h2>docker images in28min/rest-api-full-stack:0.0.1-SNAPSHOT
+REPOSITORY                    TAG              IMAGE ID       CREATED        SIZE
+in28min/rest-api-full-stack   0.0.1-SNAPSHOT   0c071cfe26e5   21 hours ago   145MB
+
+C:\Mrinal\tutorial\docker\docker-crash-course-master\04-spring-boot-react-full-stack-h2>docker images in28min/todo-front-end:0.0.1-SNAPSHOT
+REPOSITORY               TAG              IMAGE ID       CREATED        SIZE
+in28min/todo-front-end   0.0.1-SNAPSHOT   c94dd6e4d153   23 hours ago   16.9MB
+
+Now start the docker-compose:
+docker-compose up
+
+Now check the container:
+C:\Mrinal\tutorial\docker\docker-crash-course-master\04-spring-boot-react-full-stack-h2>docker container ls
+CONTAINER ID   IMAGE                                        COMMAND                  CREATED         STATUS         PORTS                                       NAMES
+6d0ae66572cf   in28min/todo-front-end:0.0.1-SNAPSHOT        "nginx -g 'daemon of…"   4 minutes ago   Up 4 minutes   0.0.0.0:4200->80/tcp, :::4200->80/tcp       04-spring-boot-react-full-stack-h2_todo-frontend_1
+12ddecbc1164   in28min/rest-api-full-stack:0.0.1-SNAPSHOT   "java -cp app:app/li…"   4 minutes ago   Up 4 minutes   0.0.0.0:8080->8080/tcp, :::8080->8080/tcp   04-spring-boot-react-full-stack-h2_todo-api_1
+
+stop the container:
+C:\Mrinal\tutorial\docker\docker-crash-course-master\04-spring-boot-react-full-stack-h2>docker-compose stop
+Stopping 04-spring-boot-react-full-stack-h2_todo-frontend_1 ... done
+Stopping 04-spring-boot-react-full-stack-h2_todo-api_1      ... done
+
+C:\Mrinal\tutorial\docker\docker-crash-course-master\04-spring-boot-react-full-stack-h2>docker container ls
+CONTAINER ID   IMAGE     COMMAND   CREATED   STATUS    PORTS     NAMES
+
+Start the container in detached mode:
+C:\Mrinal\tutorial\docker\docker-crash-course-master\04-spring-boot-react-full-stack-h2>docker-compose up -d
+Docker Compose is now in the Docker CLI, try `docker compose up`
+
+Starting 04-spring-boot-react-full-stack-h2_todo-api_1 ... done
+Starting 04-spring-boot-react-full-stack-h2_todo-frontend_1 ... done
+
+C:\Mrinal\tutorial\docker\docker-crash-course-master\04-spring-boot-react-full-stack-h2>docker container ls
+CONTAINER ID   IMAGE                                        COMMAND                  CREATED         STATUS          PORTS                                       NAMES
+6d0ae66572cf   in28min/todo-front-end:0.0.1-SNAPSHOT        "nginx -g 'daemon of…"   8 minutes ago   Up 18 seconds   0.0.0.0:4200->80/tcp, :::4200->80/tcp       04-spring-boot-react-full-stack-h2_todo-frontend_1
+12ddecbc1164   in28min/rest-api-full-stack:0.0.1-SNAPSHOT   "java -cp app:app/li…"   8 minutes ago   Up 22 seconds   0.0.0.0:8080->8080/tcp, :::8080->8080/tcp   04-spring-boot-react-full-stack-h2_todo-api_1
+
+C:\Mrinal\tutorial\docker\docker-crash-course-master\04-spring-boot-react-full-stack-h2>docker network ls
+NETWORK ID     NAME                                                               DRIVER    SCOPE
+03a9d3aafffc   04-spring-boot-react-full-stack-h2_fullstack-application-network   bridge    local
+
+To inspect the container:
+docker inspect 03a9d3aafffc   
+
+To stop and remove:
+C:\Mrinal\tutorial\docker\docker-crash-course-master\04-spring-boot-react-full-stack-h2>docker-compose down
+Stopping 04-spring-boot-react-full-stack-h2_todo-frontend_1 ... done
+Stopping 04-spring-boot-react-full-stack-h2_todo-api_1      ... done
+Removing 04-spring-boot-react-full-stack-h2_todo-frontend_1 ... done
+Removing 04-spring-boot-react-full-stack-h2_todo-api_1      ... done
+Removing network 04-spring-boot-react-full-stack-h2_fullstack-application-network
+=============================================
+If you want to specify mysql in docker-compose.yml:
+services:
+  todo-web-application:
+    image: in28min/todo-web-application-mysql:0.0.1-SNAPSHOT
+    #build:
+      #context: .
+      #dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    restart: always
+    depends_on: # Start the depends_on first
+      - mysql 
+    environment:
+      RDS_HOSTNAME: mysql
+      RDS_PORT: 3306
+      RDS_DB_NAME: todos
+      RDS_USERNAME: todos-user
+      RDS_PASSWORD: dummytodos
+    networks:
+      - todo-web-application-network
+
+  mysql:
+    image: mysql:5.7
+    ports:
+      - "3307:3306"
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_ROOT_PASSWORD: dummypassword 
+      MYSQL_USER: todos-user
+      MYSQL_PASSWORD: dummytodos
+      MYSQL_DATABASE: todos
+    volumes:
+      - mysql-database-data-volume:/var/lib/mysql
+    networks:
+      - todo-web-application-network  
+  
+# Volumes
+volumes:
+  mysql-database-data-volume:
+
+networks:
+  todo-web-application-network:
+
+Then C:\Mrinal\tutorial\docker\docker-crash-course-master\03-todo-web-application-mysql>docker-compose up
+================================================
+Different docker-compose command:
+1. docker-compose stop - graceful shutdonw
+2. docker-compose kill - immediately terminates the process
+3. docker-compose up - up the process
+4. docker-compose down - down and remove the process
+5. docker-compose config - see the config file
+6. docker-compose ps - check the process
+7. docker-compose pause - pasue the running container
+8. docker-compose unpause - relese pause
+9. docker-compose build - build the specified files which are mentioned as build in docker-compose.yml
+
+
+
+================================================Docker with microservice================================
+
+
+
+
+
+
+
+
+
+
