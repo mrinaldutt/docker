@@ -101,6 +101,17 @@ C:\Users\594219>docker container run -p 5000:5000 -d --restart=always in28min/to
 then if we stop the container like: C:\Users\594219>docker container stop <container_id>
 so restart always is like, if we restart the docker desktop, so automatically restart conatainer
 
+Can a container restart by itself:
+Yes, it is possible only while using certain docker-defined policies while using the docker run command. Following are the available policies:
+	
+	1. Off: In this, the container won’t be restarted in case it's stopped or it fails.
+	2. On-failure: Here, the container restarts by itself only when it experiences failures not associated with the user.
+	3. Unless-stopped: Using this policy, ensures that a container can restart only when the command is executed to stop it by the user.
+	4. Always: Irrespective of the failure or stopping, the container always gets restarted in this type of policy.
+	
+	These policies can be used as:
+	docker run -dit — restart [restart-policy-value] [container_name]
+
 
 docker events: to show all of the events in docker - C:\Users\594219>docker events
 
