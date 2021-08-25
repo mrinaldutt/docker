@@ -335,7 +335,7 @@ and setting.xml:
 <server>
 <id>docker-repo-mrinaldutt.com:8080</id>
 <username>mrinaldutt</username>
-<password>Maya2021#</password>
+<password>Maya*****</password>
 </server>
 </servers>
 
