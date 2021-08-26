@@ -213,6 +213,27 @@ if you run mvn clean package,
 4. ENTRYPOINT ["sh", "-c", "java -jar /app.jar"]
 ---------------------------------
 
+Difference between copy and add
+COPY target/hello-world-rest-api.jar /usr/local/tomcat/webapps/ROOT.war
+ADD target/hello-world-rest-api.jar hello-world-rest-api.jar
+
+Copy - allow us to copy files/directories into the container image
+However using copy, you can not specify URLS.
+Add - using it, we can copy the files into contianer image and also we can specify url in add command which can be useful to get the download all required file from the url.
+
+Recommended to use copy always as it is use to copy a single file or simple files.
+
+
+Difference bewtween CMD and ENTRYPOINT:
+CMD ["catalina.sh","run"]
+ENTRYPOINT ["sh", "-c", "java -jar /app.jar"]
+CMD - default parameter - When you pass parameters from command line, your default parameters are overridden.
+ENTRYPOINT: making your container executable, When you pass argument in command line, those will not override the entrypoint.
+The way to override is we need to paas --entrypoint uisng command line, but by default the argument not override in command line
+so always use entrypoint.
+
+--------------------------------
+
 Now we want to cached the jar files from docker.
 1. So need to split the jar from created code using maven plugin
 <plugin>	
