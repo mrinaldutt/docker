@@ -397,12 +397,16 @@ MySQL  localhost:3307 ssl  todos  SQL > select *from todo;
 +----+-----------------------------------+---------+----------------------------+-------------+
 1 row in set (0.1112 sec)
 =======================Bridge Network Issue======================
-As both the container using localhost, thus brdige network issue occurs, we will overcome this by supply --link.
+As both the container using localhost, thus brdige network issue occurs, we will overcome this by supply --link. But this is not recomended.
+C:\Users\594219>docker run -p 8080:8080 --link=mysql in28min/todo-web-application-mysql:0.0.1-SNAPSHOT
 
 1. Chnage application.properties:
 spring.datasource.url=jdbc:mysql://${RDS_HOSTNAME:localhost}:${RDS_PORT:3307}/${RDS_DB_NAME:todos}
 spring.datasource.username=${RDS_USERNAME:todos-user}
 spring.datasource.password=${RDS_PASSWORD:dummytodos}
+
+docker container run -p 8080:8080 --link=mysql --env RDS_HOSTNAME=mysql  in28min/todo-web-application-mysql:0.0.1-SNAPSHOT
+
 
 2. docker run --detach --env MYSQL_ROOT_PASSWORD=dummypassword --env MYSQL_USER=todos-user --env MYSQL_PASSWORD=dummytodos --env MYSQL_DATABASE=todos --name mysql --publish 3306:3306 mysql:5.7
 
@@ -418,8 +422,8 @@ NETWORK ID     NAME      DRIVER    SCOPE
 C:\Users\594219>docker inspect bridge
 here you can see mysql running on bridge network. if you run todos app, then you coould find both the container inside the bridge network
 
-C:\Users\594219>docker container run -d ---network=host in28min/todo-web-application-mysql:0.0.1-SNAPSHOT
-it will work only with linux env.
+C:\Users\594219>docker container run -d --network=host in28min/todo-web-application-mysql:0.0.1-SNAPSHOT
+it will work only with linux env. It wont worked in windows or mac.
 
 =================== Custom network ===================================
 Here we will create our own network:
@@ -460,7 +464,7 @@ C:\Users\594219>docker inspect f7f411e490d3
 backup data while remove mysql container.
 Use volume
 
-docker run --detach --env MYSQL_ROOT_PASSWORD=dummypassword --env MYSQL_USER=todos-user --env MYSQL_PASSWORD=dummytodos --env MYSQL_DATABASE=todos --name mysql --publish 3306:3306 --network=web-application-mysql-network --volume mysql-database-volume:/var/lib/mysql  mysql:5.7
+docker run --detach --env MYSQL_ROOT_PASSWORD=dummypassword --env MYSQL_USER=todos-user --env MYSQL_PASSWORD=dummytodos --env MYSQL_DATABASE=todos --name mysql --publish 3307:3306 --network=web-application-mysql-network --volume mysql-database-volume:/var/lib/mysql  mysql:5.7
 
 Now run docker container run -p 8080:8080 --network=web-application-mysql-network -e RDS_HOSTNAME=mysql  in28min/todo-web-application-mysql:0.0.1-SNAPSHOT
 ====================================================REACT JS with Rest Application================================
