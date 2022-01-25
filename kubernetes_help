@@ -1,0 +1,711 @@
+Container Orchestration:
+Manage 1000's instance 1000's of microservices
+
+-------------------------------------------------------------------
+kubernets:
+Features:
+Declarative
+Easy Scalaling
+Load Balancing
+Self Healing
+Zero Downtime Deployment
+-----------------------------------------------------------------
+
+Kubernetes architecture:
+master node - Manage cluster
+Worker Nodes - run your application
+
+cluster - conatines nodes
+
+-------------------------------------------------------------------
+create cluser in Google cloud platform after login by using kubernets Engine ->cloud.google.com
+create cluster - name of the cluser : 	
+check the nodes and other stuff, you can find a master node will capture some memory and cpu, other will apture by worker nodes
+
+Now click on cluster and open cloud shell.
+
+now into cloud shell:
+Welcome to Cloud Shell! Type "help" to get started.
+Your Cloud Platform project in this session is set to eternal-outlook-327718.
+Use “gcloud config set project [PROJECT_ID]” to change to a different project.
+
+Connect to cluster:
+awstests2020@cloudshell:~ (eternal-outlook-327718)$ gcloud container clusters get-credentials in28minutes-cluster --zone us-central1-c --project eternal-outlook-327718
+Fetching cluster endpoint and auth data.
+kubeconfig entry generated for in28minutes-cluster.
+
+check kubectl version, kuberctl is a tool by which we can connect with kubernetes cluster:
+awstests2020@cloudshell:~ (eternal-outlook-327718)$ kubectl version
+Client Version: version.Info{Major:"1", Minor:"22", GitVersion:"v1.22.2", GitCommit:"8b5a19147530eaac9476b0ab82980b4088bbc1b2", GitTreeState:"clean", BuildDate:"2021-09-15T21:38:50Z", GoVersion:"go1.16.8", Compiler:"gc", Platform:"linux/amd64"}
+Server Version: version.Info{Major:"1", Minor:"20+", GitVersion:"v1.20.9-gke.1001", GitCommit:"1fe18c314ed577f6047d2712a9d1c8e498e22381", GitTreeState:"clean", BuildDate:"2021-08-23T23:06:28Z", GoVersion:"go1.15.13b5", Compiler:"gc", Platform:"linux/amd64"}
+WARNING: version difference between client (1.22) and server (1.20) exceeds the supported minor version skew of +/-1
+
+now deploy an application from dockerhub: It will created deployment, replicaset and pods.
+awstests2020@cloudshell:~ (eternal-outlook-327718)$ kubectl create deployment hello-world-rest-api --image=in28min/hello-world-rest-api:0.0.1.RELEASE
+deployment.apps/hello-world-rest-api created
+
+Now expose to external for accessing the application: It will create services
+awstests2020@cloudshell:~ (eternal-outlook-327718)$ kubectl expose deployment hello-world-rest-api --type=LoadBalancer --port=8080
+service/hello-world-rest-api exposed
+awstests2020@cloudshell:~ (eternal-outlook-327718)$
+
+get the details of the events:
+kubectl get events
+
+get the details of pods:
+awstests2020@cloudshell:~ (eternal-outlook-327718)$ kubectl get pods
+NAME                                    READY   STATUS    RESTARTS   AGE
+hello-world-rest-api-687d9c7bc7-t4bdg   1/1     Running   0          13m
+
+get the details of replicaset:
+awstests2020@cloudshell:~ (eternal-outlook-327718)$ kubectl get replicaset
+NAME                              DESIRED   CURRENT   READY   AGE
+hello-world-rest-api-687d9c7bc7   1         1         1       13m
+	
+get the details of services:
+awstests2020@cloudshell:~ (eternal-outlook-327718)$ kubectl get service
+NAME                   TYPE           CLUSTER-IP      EXTERNAL-IP     PORT(S)          AGE
+hello-world-rest-api   LoadBalancer   10.100.15.232   35.184.30.180   8080:30863/TCP   11m
+kubernetes             ClusterIP      10.100.0.1      <none>          443/TCP          29m
+
+get the details of deployment:
+awstests2020@cloudshell:~ (eternal-outlook-327718)$ kubectl get deployment
+NAME                   READY   UP-TO-DATE   AVAILABLE   AGE
+hello-world-rest-api   1/1     1            1           14m
+awstests2020@cloudshell:~ (eternal-outlook-327718)$
+-------------------------------------------------------------------
+
+PODS: smallest deployable unit in kubernetes
+you cannot have a container without pods, your container lives inside our pods.
+
+each pod have unique ip address, number of container. POD can have multiple container and all the containers present inside the pods have share resources. 
+Within the same pod, container talk to each other using localhost. Here pods have single container, thus its showing 1/1.
+awstests2020@cloudshell:~ (eternal-outlook-327718)$ kubectl get pods -o wide
+NAME                                    READY   STATUS    RESTARTS   AGE   IP          NODE                                                 NOMINATED NODE   READINESS GATES
+hello-world-rest-api-687d9c7bc7-t4bdg   1/1     Running   0          22m   10.96.1.9   gke-in28minutes-cluster-default-pool-4235b454-tvzt   <none>           <none>
+	
+
+kubectl explain pods:
+kubernets contains nodes and each node can contains multiple pods and each of these pods contains multiple containers. These pods can be from different application or from the same application.
+-------------------------------------------------------------------
+
+Details of the pods:
+awstests2020@cloudshell:~ (eternal-outlook-327718)$ kubectl describe pod hello-world-rest-api-687d9c7bc7-t4bdg
+Name:         hello-world-rest-api-687d9c7bc7-t4bdg
+Namespace:    default
+Priority:     0
+Node:         gke-in28minutes-cluster-default-pool-4235b454-tvzt/10.128.0.3
+Start Time:   Fri, 01 Oct 2021 18:54:05 +0000
+Labels:       app=hello-world-rest-api
+              pod-template-hash=687d9c7bc7
+Annotations:  <none>
+Status:       Running
+IP:           10.96.1.9
+IPs:
+  IP:           10.96.1.9
+Controlled By:  ReplicaSet/hello-world-rest-api-687d9c7bc7
+Containers:
+  hello-world-rest-api:
+    Container ID:   containerd://361b4e8570e69f60227eb4f59310893fb457a607ed34cb1d926e296d893605b7
+    Image:          in28min/hello-world-rest-api:0.0.1.RELEASE
+    Image ID:       docker.io/in28min/hello-world-rest-api@sha256:00469c343814aabe56ad1034427f546d43bafaaa11208a1eb0720993743f72be
+    Port:           <none>
+    Host Port:      <none>
+    State:          Running
+      Started:      Fri, 01 Oct 2021 18:54:11 +0000
+    Ready:          True
+    Restart Count:  0
+
+Namespace: here namespace can be useful for different envionment like qa, production, dev. we can mention in namespace.
+Label: name of the war
+Annotations: meta information of specific pod. what is release id, author name.
+status: RUnning or stopped status.
+-------------------------------------------------------------------------------------
+Kubernetes Architcture
+Node -> POD1 -> (Container1, Container2)
+Node -> POD2 -> (Container3, Container4)
+
+-------------------------------------------------------------------------------------
+
+Relicaset:
+It ensure specfic number of pods are running all times.
+
+awstests2020@cloudshell:~ (eternal-outlook-327718)$ kubectl get replicaset
+NAME                              DESIRED   CURRENT   READY   AGE
+hello-world-rest-api-687d9c7bc7   1         1         1       13m
+
+if you delete the pod:
+kubectl delete pods <pod_id>
+pod will be deleted
+
+try now : kubectl get pods -o wide
+a new version of pods are created and running status
+
+Also, you can see the application is runnning
+
+So, even after pods deleted, replicaset create a new one and and running status. atleast one pod always running
+
+awstests2020@cloudshell:~$ kubectl get pod -o wide
+NAME                                    READY   STATUS    RESTARTS   AGE   IP          NODE                                                 NOMINATED NODE   READINESS GATES
+hello-world-rest-api-687d9c7bc7-tns7q   1/1     Running   0          26m   10.96.2.8   gke-in28minutes-cluster-default-pool-e40f0b58-9lvc   <none>           <none>
+
+awstests2020@cloudshell:~$ kubectl delete pods hello-world-rest-api-687d9c7bc7-tns7q
+pod "hello-world-rest-api-687d9c7bc7-tns7q" deleted
+
+awstests2020@cloudshell:~$ kubectl get pod -o wide
+NAME                                    READY   STATUS    RESTARTS   AGE   IP          NODE                                                 NOMINATED NODE   READINESS GATES
+hello-world-rest-api-687d9c7bc7-rvj2h   1/1     Running   0          20s   10.96.2.9   gke-in28minutes-cluster-default-pool-e40f0b58-9lvc   <none>           <none>
+
+
+Even we deleted the pod, stil application running because of ReplicaSet.
+
+----------------------------------------------------------------------------------
+
+create more pods:
+kubectl scale deployment hellow-world-rest-api --replicas=3
+
+check: kubetl get pods
+here you can see 3 pods are running
+
+awstests2020@cloudshell:~$ kubectl scale deployment hello-world-rest-api --replicas=3
+deployment.apps/hello-world-rest-api scaled
+
+awstests2020@cloudshell:~$ kubectl get pod -o wide
+NAME                                    READY   STATUS              RESTARTS   AGE     IP          NODE                                                 NOMINATED NODE   READINESS GATES
+hello-world-rest-api-687d9c7bc7-4rfjh   0/1     ContainerCreating   0          5s      <none>      gke-in28minutes-cluster-default-pool-e40f0b58-3417   <none>           <none>
+hello-world-rest-api-687d9c7bc7-bdfct   0/1     ContainerCreating   0          5s      <none>      gke-in28minutes-cluster-default-pool-e40f0b58-x2l5   <none>           <none>
+hello-world-rest-api-687d9c7bc7-rvj2h   1/1     Running             0          3m18s   10.96.2.9   gke-in28minutes-cluster-default-pool-e40f0b58-9lvc   <none>           <none>
+
+
+now check replicaset: kubectl get replicaset
+here you can find desired=3, current=3
+so, scaling pods replicaset also chaging
+
+awstests2020@cloudshell:~$ kubectl get replicaset
+NAME                              DESIRED   CURRENT   READY   AGE
+hello-world-rest-api-687d9c7bc7   3         3         3       33m
+
+-----------------------------------------------------------------------------------
+
+now check the events: kubectl get events --sort-by=.metadata.creationTimestamp
+
+------------------------------------------------------------------------------------DEPLOYMENT-------------------------------------------
+
+TO check the details of replica set:
+awstests2020@cloudshell:~$ kubectl get rs
+NAME                              DESIRED   CURRENT   READY   AGE
+hello-world-rest-api-687d9c7bc7   3         3         3       3h38m
+
+awstests2020@cloudshell:~$ kubectl get rs -o wide
+NAME                              DESIRED   CURRENT   READY   AGE     CONTAINERS             IMAGES                                       SELECTOR
+hello-world-rest-api-687d9c7bc7   3         3         3       3h38m   hello-world-rest-api   in28min/hello-world-rest-api:0.0.1.RELEASE   app=hello-world-rest-api,pod-template-hash=687d9c7bc7
+
+To Deploy new version of application: name of the image as DUMMY_IMAGE and the container name as hello-world-rest-api
+awstests2020@cloudshell:~$ kubectl set image deployment hello-world-rest-api hello-world-rest-api=DUMMY_IMAGE:TEST
+deployment.apps/hello-world-rest-api image updated
+
+As the above image is not found, the deployment got error. To confirm check replicaset:
+awstests2020@cloudshell:~$ kubectl get rs -o wideNAME                              DESIRED   CURRENT   READY   AGE     CONTAINERS             IMAGES                                       SELECTOR
+hello-world-rest-api-687d9c7bc7   3         3         3       3h45m   hello-world-rest-api   in28min/hello-world-rest-api:0.0.1.RELEASE   app=hello-world-rest-api,pod-template-hash=687d9c7bc7
+hello-world-rest-api-84d8799896   1         1         0       2m57s   hello-world-rest-api   DUMMY_IMAGE:TEST                             app=hello-world-rest-api,pod-template-hash=84d8799896
+
+Here you found the ready state as 0. So none of them are ready state.
+
+If you see the pods, you can find invalid status.
+awstests2020@cloudshell:~$ kubectl get pods
+NAME                                    READY   STATUS             RESTARTS   AGE
+hello-world-rest-api-687d9c7bc7-4rfjh   1/1     Running            0          3h16m
+hello-world-rest-api-687d9c7bc7-bdfct   1/1     Running            0          3h16m
+hello-world-rest-api-687d9c7bc7-rvj2h   1/1     Running            0          3h19m
+hello-world-rest-api-84d8799896-29wvl   0/1     InvalidImageName   0          4m56s
+
+You can inspect little deeper:
+awstests2020@cloudshell:~$ kubectl describe pod hello-world-rest-api-84d8799896-29wvl
+Name:         hello-world-rest-api-84d8799896-29wvl
+Namespace:    default
+Priority:     0
+Node:         gke-in28minutes-cluster-default-pool-e40f0b58-9lvc/10.128.0.10
+Start Time:   Thu, 23 Dec 2021 17:31:21 +0000
+Labels:       app=hello-world-rest-api
+              pod-template-hash=84d8799896
+Annotations:  <none>
+Status:       Pending
+IP:           10.96.2.10
+IPs:
+  IP:           10.96.2.10
+Controlled By:  ReplicaSet/hello-world-rest-api-84d8799896
+Containers:
+  hello-world-rest-api:
+    Container ID:
+    Image:          DUMMY_IMAGE:TEST
+    Image ID:
+    Port:           <none>
+    Host Port:      <none>
+    State:          Waiting
+      Reason:       InvalidImageName
+    Ready:          False
+    Restart Count:  0
+    Environment:    <none>
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-76tk9 (ro)
+Conditions:
+  Type              Status
+  Initialized       True
+  Ready             False
+  ContainersReady   False
+  PodScheduled      True
+Volumes:
+  kube-api-access-76tk9:
+    Type:                    Projected (a volume that contains injected data from multiple sources)
+    TokenExpirationSeconds:  3607
+    ConfigMapName:           kube-root-ca.crt
+    ConfigMapOptional:       <nil>
+    DownwardAPI:             true
+QoS Class:                   BestEffort
+Node-Selectors:              <none>
+Tolerations:                 node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
+                             node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
+Events:
+  Type     Reason         Age                    From               Message
+  ----     ------         ----                   ----               -------
+  Normal   Scheduled      6m18s                  default-scheduler  Successfully assigned default/hello-world-rest-api-84d8799896-29wvl to gke-in28minutes-cluster-default-pool-e40f0b58-9lvc
+  Warning  Failed         4m4s (x12 over 6m17s)  kubelet            Error: InvalidImageName
+  Warning  InspectFailed  74s (x25 over 6m17s)   kubelet            Failed to apply default image tag "DUMMY_IMAGE:TEST": couldn't parse image reference "DUMMY_IMAGE:TEST": invalid reference format: repository name must be lowercase
+  
+  
+  Now check the events:
+  awstests2020@cloudshell:~$ kubectl get events --sort-by=.metadata.creationTimestamp
+LAST SEEN   TYPE      REASON              OBJECT                                       MESSAGE
+7m49s       Normal    ScalingReplicaSet   deployment/hello-world-rest-api              Scaled up replica set hello-world-rest-api-84d8799896 to 1
+7m47s       Normal    SuccessfulCreate    replicaset/hello-world-rest-api-84d8799896   Created pod: hello-world-rest-api-84d8799896-29wvl
+7m45s       Normal    Scheduled           pod/hello-world-rest-api-84d8799896-29wvl    Successfully assigned default/hello-world-rest-api-84d8799896-29wvl to gke-in28minutes-cluster-default-pool-e40f0b58-9lvc
+2m41s       Warning   InspectFailed       pod/hello-world-rest-api-84d8799896-29wvl    Failed to apply default image tag "DUMMY_IMAGE:TEST": couldn't parse image reference "DUMMY_IMAGE:TEST": invalid reference format: repository name must be lowercase
+5m31s       Warning   Failed              pod/hello-world-rest-api-84d8799896-29wvl    Error: InvalidImageName
+
+Now deloy the proper version of image:
+awstests2020@cloudshell:~$ kubectl set image deployment hello-world-rest-api hello-world-rest-api=in28min/hello-world-rest-api:0.0.2.RELEASE
+deployment.apps/hello-world-rest-api image updated
+
+
+awstests2020@cloudshell:~$ kubectl get rsNAME                              DESIRED   CURRENT   READY   AGE
+hello-world-rest-api-687d9c7bc7   0         0         0       3h53m
+hello-world-rest-api-7ddff5dfc6   3         3         3       40s
+hello-world-rest-api-84d8799896   0         0         0       11m
+
+
+awstests2020@cloudshell:~$ kubectl get podsNAME                                    READY   STATUS    RESTARTS   AGE
+hello-world-rest-api-7ddff5dfc6-5cx9l   1/1     Running   0          66s
+hello-world-rest-api-7ddff5dfc6-d8gnq   1/1     Running   0          62s
+hello-world-rest-api-7ddff5dfc6-kl6pd   1/1     Running   0          69s
+
+
+awstests2020@cloudshell:~$ kubectl get rs -o wideNAME                              DESIRED   CURRENT   READY   AGE     CONTAINERS             IMAGES                                       SELECTOR
+hello-world-rest-api-687d9c7bc7   0         0         0       3h54m   hello-world-rest-api   in28min/hello-world-rest-api:0.0.1.RELEASE   app=hello-world-rest-api,pod-template-hash=687d9c7bc7
+hello-world-rest-api-7ddff5dfc6   3         3         3       96s     hello-world-rest-api   in28min/hello-world-rest-api:0.0.2.RELEASE   app=hello-world-rest-api,pod-template-hash=7ddff5dfc6
+hello-world-rest-api-84d8799896   0         0         0       12m     hello-world-rest-api   DUMMY_IMAGE:TEST                             app=hello-world-rest-api,pod-template-hash=84d8799896
+
+
+To check the events:
+awstests2020@cloudshell:~$ kubectl get events --sort-by=.metadata.creationTimestampLAST SEEN   TYPE      REASON              OBJECT                                       MESSAGE
+13m         Normal    ScalingReplicaSet   deployment/hello-world-rest-api              Scaled up replica set hello-world-rest-api-84d8799896 to 1
+13m         Normal    SuccessfulCreate    replicaset/hello-world-rest-api-84d8799896   Created pod: hello-world-rest-api-84d8799896-29wvl
+13m         Normal    Scheduled           pod/hello-world-rest-api-84d8799896-29wvl    Successfully assigned default/hello-world-rest-api-84d8799896-29wvl to gke-in28minutes-cluster-default-pool-e40f0b58-9lvc
+11m         Warning   Failed              pod/hello-world-rest-api-84d8799896-29wvl    Error: InvalidImageName
+3m41s       Warning   InspectFailed       pod/hello-world-rest-api-84d8799896-29wvl    Failed to apply default image tag "DUMMY_IMAGE:TEST": couldn't parse image reference "DUMMY_IMAGE:TEST": invalid reference format: repository name must be lowercase
+2m50s       Normal    ScalingReplicaSet   deployment/hello-world-rest-api              Scaled down replica set hello-world-rest-api-84d8799896 to 0
+2m49s       Normal    ScalingReplicaSet   deployment/hello-world-rest-api              Scaled up replica set hello-world-rest-api-7ddff5dfc6 to 1
+2m50s       Normal    SuccessfulDelete    replicaset/hello-world-rest-api-84d8799896   Deleted pod: hello-world-rest-api-84d8799896-29wvl
+2m49s       Normal    Scheduled           pod/hello-world-rest-api-7ddff5dfc6-kl6pd    Successfully assigned default/hello-world-rest-api-7ddff5dfc6-kl6pd to gke-in28minutes-cluster-default-pool-e40f0b58-9lvc
+2m49s       Normal    SuccessfulCreate    replicaset/hello-world-rest-api-7ddff5dfc6   Created pod: hello-world-rest-api-7ddff5dfc6-kl6pd
+2m49s       Normal    Pulling             pod/hello-world-rest-api-7ddff5dfc6-kl6pd    Pulling image "in28min/hello-world-rest-api:0.0.2.RELEASE"
+2m47s       Normal    Pulled              pod/hello-world-rest-api-7ddff5dfc6-kl6pd    Successfully pulled image "in28min/hello-world-rest-api:0.0.2.RELEASE" in 1.921336176s
+2m46s       Normal    SuccessfulCreate    replicaset/hello-world-rest-api-7ddff5dfc6   Created pod: hello-world-rest-api-7ddff5dfc6-5cx9l
+2m46s       Normal    SuccessfulDelete    replicaset/hello-world-rest-api-687d9c7bc7   Deleted pod: hello-world-rest-api-687d9c7bc7-rvj2h
+2m46s       Normal    Started             pod/hello-world-rest-api-7ddff5dfc6-kl6pd    Started container hello-world-rest-api
+2m46s       Normal    Created             pod/hello-world-rest-api-7ddff5dfc6-kl6pd    Created container hello-world-rest-api
+2m46s       Normal    Killing             pod/hello-world-rest-api-687d9c7bc7-rvj2h    Stopping container hello-world-rest-api
+2m46s       Normal    Scheduled           pod/hello-world-rest-api-7ddff5dfc6-5cx9l    Successfully assigned default/hello-world-rest-api-7ddff5dfc6-5cx9l to gke-in28minutes-cluster-default-pool-e40f0b58-x2l5
+2m46s       Normal    ScalingReplicaSet   deployment/hello-world-rest-api              Scaled up replica set hello-world-rest-api-7ddff5dfc6 to 2
+2m46s       Normal    ScalingReplicaSet   deployment/hello-world-rest-api              Scaled down replica set hello-world-rest-api-687d9c7bc7 to 2
+2m45s       Normal    Pulling             pod/hello-world-rest-api-7ddff5dfc6-5cx9l    Pulling image "in28min/hello-world-rest-api:0.0.2.RELEASE"
+2m43s       Normal    Started             pod/hello-world-rest-api-7ddff5dfc6-5cx9l    Started container hello-world-rest-api
+2m43s       Normal    Pulled              pod/hello-world-rest-api-7ddff5dfc6-5cx9l    Successfully pulled image "in28min/hello-world-rest-api:0.0.2.RELEASE" in 1.791296253s
+2m43s       Normal    Created             pod/hello-world-rest-api-7ddff5dfc6-5cx9l    Created container hello-world-rest-api
+2m42s       Normal    Scheduled           pod/hello-world-rest-api-7ddff5dfc6-d8gnq    Successfully assigned default/hello-world-rest-api-7ddff5dfc6-d8gnq to gke-in28minutes-cluster-default-pool-e40f0b58-3417
+2m42s       Normal    SuccessfulCreate    replicaset/hello-world-rest-api-7ddff5dfc6   Created pod: hello-world-rest-api-7ddff5dfc6-d8gnq
+2m42s       Normal    Pulling             pod/hello-world-rest-api-7ddff5dfc6-d8gnq    Pulling image "in28min/hello-world-rest-api:0.0.2.RELEASE"
+2m42s       Normal    ScalingReplicaSet   deployment/hello-world-rest-api              Scaled up replica set hello-world-rest-api-7ddff5dfc6 to 3
+2m42s       Normal    SuccessfulDelete    replicaset/hello-world-rest-api-687d9c7bc7   Deleted pod: hello-world-rest-api-687d9c7bc7-bdfct
+2m42s       Normal    Killing             pod/hello-world-rest-api-687d9c7bc7-bdfct    Stopping container hello-world-rest-api
+2m42s       Normal    ScalingReplicaSet   deployment/hello-world-rest-api              Scaled down replica set hello-world-rest-api-687d9c7bc7 to 1
+2m40s       Normal    Pulled              pod/hello-world-rest-api-7ddff5dfc6-d8gnq    Successfully pulled image "in28min/hello-world-rest-api:0.0.2.RELEASE" in 1.835967082s
+2m40s       Normal    Created             pod/hello-world-rest-api-7ddff5dfc6-d8gnq    Created container hello-world-rest-api
+2m39s       Normal    Killing             pod/hello-world-rest-api-687d9c7bc7-4rfjh    Stopping container hello-world-rest-api
+2m39s       Normal    Started             pod/hello-world-rest-api-7ddff5dfc6-d8gnq    Started container hello-world-rest-api
+2m39s       Normal    SuccessfulDelete    replicaset/hello-world-rest-api-687d9c7bc7   Deleted pod: hello-world-rest-api-687d9c7bc7-4rfjh
+2m39s       Normal    ScalingReplicaSet   deployment/hello-world-rest-api              Scaled down replica set hello-world-rest-api-687d9c7bc7 to 0
+
+
+The strategy of update the new deployment is : rolling updates. Its like decreases the number pf old pods and increase the number of new pods.
+-----------------------------------------------------------------------------------------------------------------------------
+
+let's try and summarize
+
+what we have learnt in the last few steps. A pod is nothing but a wrapper for a set of containers.
+
+A pod has an IP address and it has things like labels, annotations, and stuff like that.
+
+Now, why do we need a replica set?
+A replica set ensures that a specific number of pods are always running.
+
+So, if you say replica set 3 Instances, then it ensures that three instances of the pods are always running. Even if you kill one of the instances of the pod, replica set would observe that and it would bring up a new instance of the pod.
+
+In practice, you would see that a replica set is always tied with a specific release version. So, you'll have a replica set V1 and that would be maintaining a specified number of instances of the V1 release.
+So, a replica set V1 is responsible for making sure that, that specified number of instances of Version1 of the application are always running.
+
+Why do we need a deployment?
+A deployment ensures that a release upgrade, a switch from V1 to V2, happens without a hitch. You don't really want to have downtimes when you release new versions of applications and that's where deployment plays a key role.
+
+There are a variety of deployment strategies. When I'm releasing a new version of the application,I might want to actually send 50 percent of traffic to V1 and 50 percent of traffic to V2 or I would want to actually do something like a rolling update where I'd want to first create one instance of V2, test it, once its fine, I would reduce the number of instances of V1. After that, I'll create a new instance of V2, once it's up and running, I'll reduce the number of instances of V1 and so on and so forth until the number of instances of V1 gets reduced to zero.
+The default deployment strategy is rolling updates and that's what we saw in action in the previous step.
+
+We'll discuss deployments in depth when we talk about different release strategies in a future section. Think back and see what we are doing.
+
+We executed a few commands to launch up a few deployments and we executed a tons of other commands to understand what's happening in the background with Kubernetes. That's Kubernetesin a summary for you. Some of the concepts related to Kubernetes might be really, really complex to understand.
+But as with any good tool, as you understand these concepts, once you master these concepts, Kubernetes will be a dream to work with and that's the reason why Kubernetes is so popular and that's the reason why Kubernetes is supported by several cloud platforms, almost every cloud platform I should say, and adopted by almost every enterprise across the world.
+
+There is one more important Kubernetes concept that we'd need to understand, that's a service and we'll look at that in the next step. Until then, bye bye.
+
+-----------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------SERVICE-------------------------------------------
+In summary, a service allows your application to receive traffic through a permanent lifetime address. A service remains up and running, it provides a constant front-end interface, irrespective of whatever changes are happening to the back-end, which are all the pods where your applications are running.
+
+The great thing about Kubernetes is the fact that it provides excellent integration with different Cloud provider specific Load balancers. We were using a specific type of service called Load balancer and we saw that a Google Cloud Platform Load balancer was created for us.
+
+That shows how well Kubernetes is integrated with Google Cloud Platform to create a Load balancer. If you were working with AWS or if you are working with Azure, then that Cloud provider specific Load balancers would have been created for you as a service.
+
+Let's go to our Cloud Shell, do a clear, and run kubectl get services. This would list all the services that are running right now. You see that we have a service LoadBalancer type of service: hello-world-rest-api that we are working with right now, a load balancer can load balance between multiple pods. 
+
+awstests2020@cloudshell:~$ kubectl get services
+NAME                   TYPE           CLUSTER-IP    EXTERNAL-IP     PORT(S)          AGE
+hello-world-rest-api   LoadBalancer   10.100.8.40   35.238.215.80   8080:32604/TCP   4h23m
+kubernetes             ClusterIP      10.100.0.1    <none>          443/TCP          4h43m
+
+
+Now, 
+the other type of service is a ClusterIP service. Over here, you can see that the Kubernetes service is actually running as a ClusterIP service.
+
+Now, what does a ClusterIP service mean?
+
+A ClusterIP service can only be accessed from inside the cluster. You will not be able to access this service from outside the cluster. You can see that there is no External-IP for this specific service.  So, if you have any services which are directly consumed inside your cluster, you can have them use a ClusterIP.
+
+--------------------------------------------------Kubernetes Engine-----------------------------------------------------------------------------------
+
+let's go back to our Kubernetes engine, you can just type in Kubernetes engine down here and go to this specific thing and go to Workloads and you should see the hello-world-rest-api deployment shown as a workload inside the workload screens of hello-world-rest-api. In this step,let's look at what you can do using the UI of the Google Cloud Platform, what you can do through the Cloud console.
+
+What I am doing is, I am selecting the workload and over here you can see that there are a lot of things that you can do with this specific deployment. 
+You can edit it, you can delete it. If you go to the Actions, you can actually set something called autoscaling, you can expose the deployment, you can do a rolling update, and you can scale the deployment from here.
+
+If you click Scale, what would you expect?
+You can expect to enter how many instances do you want and you can scale it directly from here.
+
+You can do Actions, rolling update. You can update to a new release. Over here, you can enter the new release that you'd want to upgrade to, let's say, 0.0.3.RELEASE and say Update and the update of the release would be performed for you. 
+
+This is very, very similar to the set image command that we ran earlier.
+
+You can even expose the service, we have already exposed it. So, if you'd want to create a new port mapping and expose this, then you can create a new service as well. If you click Edit, you would be able to actually edit the YAML of this specific service. 
+
+Let's not worry about YAML and the details which are present in here, we will look at this in-depth in the subsequent section where we talk about YAML in depth.
+But what you can do over here is you can edit the YAML and if you go further down, you can actually submit the YAML and save this deployment. So, you can save the deployment and make the change that you have made through here.
+
+Let's say Cancel and go back to the deployment and over here, I can see more details about this deployment. You can see what is the revision history of that specific deployment.
+
+You can see that we made three changes, right?
+So, we initially started with 0.0.1.RELEASE, then we went to DUMMY_IMAGE:TEST and then we went to hello-world-rest-api:0.0.2.RELEASE.
+So, you can see all the history for those things. You can see the events related to that in here as well.
+
+The idea behind this step was to actually show you the fact that whatever we are doing using commands, through the kubectl commands,
+you can also access these details through the cloud console, the interface which is provided by Google Cloud.
+
+What we will do during the rest of the course is, we'll continue to use the command line wherever possible.
+
+--------------------------------------------------Kubernetes Architcture---------------------------------------------------------------------------
+
+What are the important part of the Master Node, what are the important components of the Worker Nodes?
+
+Let's look at that in this specific step. Let's start with the master node. What are the important components that are running as part of your master node?
+
+The most important component that is running as part of your master node is something called etcd, that's the distributed database, etcd. All the configuration changes that we are making, all the deployments that we are creating, all the scaling operations that we are performing; all the details of those are stored in a distributed database.
+What we are doing when we are executing those commands is setting the desired state for Kubernetes. We are telling Kubernetes, I would want five instances of Application A, I would want 10 instances of Application B. That's what is called desired state and the desired state is stored in the distributed database, etcd.
+So, all the Kubernetes resources like deployment, services, all the configuration that we make, is stored finally into this distributed database.
+The great thing about this database is that it is distributed.
+Typically, we would recommend you to have about three to five replicas of this database so that the Kubernetes cluster state is not lost.
+
+The second important component inside the master node is something called the API server, kube-apiserver. Earlier, we were executing commands from kubectl. We were making changes from the Google Cloud Console, from the interface provided by Google Cloud. 
+How does kubectl talk to Kubernetes cluster?
+How does the Google cloud interface or the Google cloud console talk to the Kubernetes cluster?
+The way they make their changes is through the API server. If I try to make a change through kubectl or if I try to make a change to the Google cloud console, the change is submitted to this API server and processed from here.
+
+The other two important components which are present in here are the scheduler and the controller manager. The scheduler is responsible for scheduling the pods on to the nodes. In a Kubernetes cluster, you'll have several nodes and when we are creating a new pod, you need to decide which node the pod has to be scheduled on to. The decision might be based on how much memory is available, on how much CPU is available, are there any port conflicts, and a lot of such factors. So, scheduler considers all those factors and schedules the pods on to the appropriate nodes. The controller manager manages the overall health of the cluster. Wherever we are executing kubectl commands, we are updating the desired state.
+The kubectl manager make sure that whatever desired state that we have; we would want 10 instances of application A,we would want 10 instances of application B, we would want five instances of Release 2; all those changes needs to be executed into the cluster and the controller manager is responsible for that.
+
+It makes sure that the actual state of the Kubernetes cluster matches the desired state. The important thing about a master node is typically the user applications like our hello-world-rest-api will not be scheduled on to the master node. All the user applications would be running typically in pods inside the worker nodes or just the node.
+
+So, one of the important components of the node is the applications that we would want to run; the hello-world--rest-api, a web application, or things like that. Where would they all be running?
+They'll be running inside pods. On a single node, you might have several pods running.
+Now, what are the other components which are present on the node?
+The other components which are present on the node are number one, is a node agent.
+It's called a kubelet, k-u-b-e-l-e-t.
+What is the job of a kubelet?
+The job of a kubelet is to make sure that it monitors what's happening on the node and communicates it back to the master node. So, if a pod goes down, what does the node agent do?
+It reports it to the controller manager.
+
+The other component which is present in here is a networking component called the kube-proxy. Earlier, we created a deployment and we exposed the deployment as a service. How was that possible? That is possible through the networking component.  It helps you in exposing services around your nodes and your pods.
+
+The other important component of the worker node is the container runtime. We would want to run containers inside our pods and these need the container runtime.
+The most frequently used container runtime is docker. Actually, you can use Kubernetes with any OCI, Open Container Interface, runtime spec implementations.
+
+So, we talked a lot about what is present on the master node and what is present on the node or the worker nodes.
+
+Before we end this specific section, let's discuss a few important questions.
+The first question we already talked about, does a master node run any of the application-related containers?
+Does it run hello-world-rest-api and things like that?
+We already discussed this, right? The answer to this is no.
+
+The master node is typically having only the stuff which is related to what is needed to control your worker nodes or the nodes.
+Now, the second question is, can you only run Docker containers in Kubernetes?
+The answer to that is no.
+
+We already talked about this as well, right?
+If your container is compatible with OCI, Open Container Interface, that's fine,
+you can run those containers in Kubernetes.
+Let's get to the third question, which is a very, very interesting one.
+
+What happens if the master node goes down or what happens if a specific service on a master node goes down?
+Will the applications go down? The answer to that is no.
+The applications can continue to run working even with the master node down.
+When I'm executing a URL to access an application, the master node does not get involved at all.
+The only thing that would be involved in those kind of situations are just the worker nodes, the nodes which are doing the work.
+So, even if the master node goes down or the API server goes down, our applications would continue to be working. You will not be able to make changes to them, but the existing applications would continue to run.
+
+Now, let's get back to Cloud Shell and execute a simple command, kubectl get componentstatuses.
+So, kubectl get componentstatuses. Get the spelling of the componentstatuses right, it's a little tough.You can see all the components statuses for all the things that we have talked about. You can see that we have two etcd databases; etcd-0 and etcd-1.
+
+These are both healthy. You can see the controller manager which is healthy,you can see the scheduler which is healthy as well.
+
+So, these are some of the components which are running as part of your Kubernetes master node. In this step, we discussed the different components which are present in the master node and the worker nodes or just the nodes.
+
+awstests2020@cloudshell:~$ kubectl get componentstatuses
+Warning: v1 ComponentStatus is deprecated in v1.19+NAME                 STATUS    MESSAGE             ERROR
+etcd-0               Healthy   {"health":"true"}
+controller-manager   Healthy   ok
+etcd-1               Healthy   {"health":"true"}
+scheduler            Healthy   ok
+awstests2020@cloudshell:~$
+-------------------------------------------------------------------------------------------------
+
+Link: https://github.com/in28minutes/spring-microservices-v2/tree/main/05.kubernetes
+
+
+---------------------------------------------------------------------------------------------
+
+Incase of ay depoyment failure, we can rolback by 2 ways:
+1. change in deployment.yaml and redeploy
+kubectl diff -f deployment.yaml
+kubectl apply -f deployment.yaml
+
+2. Just rollback the deployment: 
+kubectl rollout history deployment currency-conversion
+kubectl rollout history deployment currency-exchange
+kubectl rollout undo deployment currency-exchange --to-revision=1
+
+-------------------------------------------------------------------------------------------
+
+Liveness and readines probes for Microservice:
+we saw that when we were moving from one release to another release, there was a little bit of downtime, almost 15 to 20 seconds of downtime.
+And how can we avoid that?
+The way we can avoid that is by using the liveness and the readiness probes which are provided by Kubernetes.
+So, there are certain probes which are provided by Kubernetes. You can configure them to help Kubernetes check the status of an application. So Kubernetes uses probes to check the health of a microservice. If the readiness probe is not successful,then the traffic is not sent to it. So, if for this specific microservice, you have configured a readiness probe and the readiness probe is not successful, then Kubernetes will not send any traffic to that specific microservice.
+
+And there is another thing called a liveness probe, which you can configure. If the liveness probe is not successful, then the pod is restarted.So, these two probes are very, very useful when it comes to making the microservices highly available.
+
+And the amazing thing is Spring Boot Actuator provides inbuilt readiness and liveness probes. From version 2.3 of Spring Boot, Spring Boot Actuator provides two probes. These are available at URLs /health/readiness and /health/liveness. We already have our actuator in our pom.xml. So, currency-exchange-service.
+
+Do we have actuator in our pom.xml?This is where actuator is and we also enabled the liveness probes.So, this was the configuration that we done earlier to enable the iveness and the readiness probes.
+## CHANGE-KUBERNETES
+management.endpoint.health.probes.enabled=true
+management.health.livenessState.enabled=true
+management.health.readinessState.enabled=true
+
+
+Let's check the service for currency-exchange-service. So, currency-exchange. This is the external IP and so, I'll copy this and go to our browser and type in
+:8000. 8000 is the port on which currency exchange is running and /actuator. So, if I zoom into this, you can see that there are four links which are being shown in here; actuator, actuator/health, actuator/health/{*path} and info. And if I actually go into actuator/health,  itshows two groups, liveness and readiness, and now I can actually, at the end of /health, I can type in /liveness and you can see that the status, current status of the application is up.
+
+example - http://23.236.53.110:8000/actuator/health
+
+Go to our deployment configuration. So I'll go to the deployment.yaml file. No, I'll go to the deployment.yaml and make our changes. So, what we want to do is to configure a liveliness and readiness probe on the container. So, they are configured on the container.
+
+So, we need to go to the container. Let's start with configuring the readiness probe. readiness.
+        readinessProbe:
+          httpGet:
+            port: 8000
+            path: /actuator/health/readiness
+        livenessProbe:
+          httpGet:
+            port: 8000
+            path: /actuator/health/liveness
+
+
+
+Cool, everything's fine now. So, we have a readiness and liveliness configured.
+
+So let's go ahead and now deploy it in.kubectl apply -f deployment.yaml.
+
+It's configured and let's see what's happening. Onthe Cloud Shell. You can see that the service continues to be running. So, the service is still running and now let's just do a kubectl get pods. You can see that just now it has started terminating and this is now entering a running status and youcan see that it continues to work. So, configuring a readiness and liveliness probe ensures that only when the containers are ready to accept traffic, they'll be receiving the traffic. When they are starting up and when they are not ready to receive the traffic or when there is some problem with them, they will not be receiving the traffic at all.  hese checks helps Kubernetes to discover problems and quickly solve them.
+
+-------------------------------------------------------------------------------------------
+
+autoscaling:
+We can autoscale our services by 3 ways:
+1. Change in replicas from depoyment.yaml and apply deployment
+2. kubectl scale deployment currency-exchange --replicas=3
+3. Auto scale: kubectl autoscale deployment currency-exchange --min=1 --max=3 --cpu-percent=5 
+F:\Tutorial\Microservice\in28min_tutorial\kubernetes\spring-microservices-v2-main\spring-microservices-v2-main\05.kubernetes\currency-exchange-service>kubectl autoscale deployment currency-exchange --min=1 --max=4 --cpu-percent=5 
+horizontalpodautoscaler.autoscaling/currency-exchange autoscaled
+
+check the hrizontal auto sclaer:
+F:\Tutorial\Microservice\in28min_tutorial\kubernetes\spring-microservices-v2-main\spring-microservices-v2-main\05.kubernetes\currency-exchange-service>kubectl get hpa
+NAME                REFERENCE                      TARGETS        MINPODS   MAXPODS   REPLICAS   AGE
+currency-exchange   Deployment/currency-exchange   <unknown>/5%   1         4         2          40s
+
+Now apply load and you an find number of pods has been incrsased.
+
+You can delete the autoscaled:kubectl delete hpa currency-exchange
+------------------------------------------------------------------------------------------
+
+Command:
+Commands executed in this section
+Here's a backup of commands executed in this section!
+
+Refer to these if you face any problems!
+
+
+
+You can bookmark this URL as well
+
+https://github.com/in28minutes/spring-microservices-v2/tree/main/05.kubernetes#commands
+
+
+
+docker run -p 8080:8080 in28min/hello-world-rest-api:0.0.1.RELEASE
+ 
+kubectl create deployment hello-world-rest-api --image=in28min/hello-world-rest-api:0.0.1.RELEASE
+kubectl expose deployment hello-world-rest-api --type=LoadBalancer --port=8080
+kubectl scale deployment hello-world-rest-api --replicas=3
+kubectl delete pod hello-world-rest-api-58ff5dd898-62l9d
+kubectl autoscale deployment hello-world-rest-api --max=10 --cpu-percent=70
+kubectl edit deployment hello-world-rest-api #minReadySeconds: 15
+kubectl set image deployment hello-world-rest-api hello-world-rest-api=in28min/hello-world-rest-api:0.0.2.RELEASE
+ 
+gcloud container clusters get-credentials in28minutes-cluster --zone us-central1-a --project solid-course-258105
+kubectl create deployment hello-world-rest-api --image=in28min/hello-world-rest-api:0.0.1.RELEASE
+kubectl expose deployment hello-world-rest-api --type=LoadBalancer --port=8080
+kubectl set image deployment hello-world-rest-api hello-world-rest-api=DUMMY_IMAGE:TEST
+kubectl get events --sort-by=.metadata.creationTimestamp
+kubectl set image deployment hello-world-rest-api hello-world-rest-api=in28min/hello-world-rest-api:0.0.2.RELEASE
+kubectl get events --sort-by=.metadata.creationTimestamp
+kubectl get componentstatuses
+kubectl get pods --all-namespaces
+ 
+kubectl get events
+kubectl get pods
+kubectl get replicaset
+kubectl get deployment
+kubectl get service
+ 
+kubectl get pods -o wide
+ 
+kubectl explain pods
+kubectl get pods -o wide
+ 
+kubectl describe pod hello-world-rest-api-58ff5dd898-9trh2
+ 
+kubectl get replicasets
+kubectl get replicaset
+ 
+kubectl scale deployment hello-world-rest-api --replicas=3
+kubectl get pods
+kubectl get replicaset
+kubectl get events
+kubectl get events --sort.by=.metadata.creationTimestamp
+ 
+kubectl get rs
+kubectl get rs -o wide
+kubectl set image deployment hello-world-rest-api hello-world-rest-api=DUMMY_IMAGE:TEST
+kubectl get rs -o wide
+kubectl get pods
+kubectl describe pod hello-world-rest-api-85995ddd5c-msjsm
+kubectl get events --sort-by=.metadata.creationTimestamp
+ 
+kubectl set image deployment hello-world-rest-api hello-world-rest-api=in28min/hello-world-rest-api:0.0.2.RELEASE
+kubectl get events --sort-by=.metadata.creationTimestamp
+kubectl get pods -o wide
+kubectl delete pod hello-world-rest-api-67c79fd44f-n6c7l
+kubectl get pods -o wide
+kubectl delete pod hello-world-rest-api-67c79fd44f-8bhdt
+ 
+gcloud container clusters get-credentials in28minutes-cluster --zone us-central1-c --project solid-course-258105
+docker login
+docker push in28min/mmv2-currency-exchange-service:0.0.11-SNAPSHOT
+docker push in28min/mmv2-currency-conversion-service:0.0.11-SNAPSHOT
+ 
+kubectl create deployment currency-exchange --image=in28min/mmv2-currency-exchange-service:0.0.11-SNAPSHOT
+kubectl expose deployment currency-exchange --type=LoadBalancer --port=8000
+kubectl get svc
+kubectl get services
+kubectl get pods
+kubectl get po
+kubectl get replicaset
+kubectl get rs
+kubectl get all
+ 
+kubectl create deployment currency-conversion --image=in28min/mmv2-currency-conversion-service:0.0.11-SNAPSHOT
+kubectl expose deployment currency-conversion --type=LoadBalancer --port=8100
+ 
+kubectl get svc --watch
+ 
+kubectl get deployments
+ 
+kubectl get deployment currency-exchange -o yaml >> deployment.yaml 
+kubectl get service currency-exchange -o yaml >> service.yaml 
+ 
+kubectl diff -f deployment.yaml
+kubectl apply -f deployment.yaml
+ 
+kubectl delete all -l app=currency-exchange
+kubectl delete all -l app=currency-conversion
+ 
+kubectl rollout history deployment currency-conversion
+kubectl rollout history deployment currency-exchange
+kubectl rollout undo deployment currency-exchange --to-revision=1
+ 
+kubectl logs currency-exchange-9fc6f979b-2gmn8
+kubectl logs -f currency-exchange-9fc6f979b-2gmn8 
+ 
+kubectl autoscale deployment currency-exchange --min=1 --max=3 --cpu-percent=5 
+kubectl get hpa
+ 
+kubectl top pod
+kubectl top nodes
+kubectl get hpa
+kubectl delete hpa currency-exchange
+ 
+kubectl create configmap currency-conversion --from-literal=CURRENCY_EXCHANGE_URI=http://currency-exchange
+kubectl get configmap
+ 
+kubectl get configmap currency-conversion -o yaml >> configmap.yaml
+ 
+watch -n 0.1 curl http://34.66.241.150:8100/currency-conversion-feign/from/USD/to/INR/quantity/10
+ 
+docker push in28min/mmv2-currency-conversion-service:0.0.12-SNAPSHOT
+docker push in28min/mmv2-currency-exchange-service:0.0.12-SNAPSHOT
